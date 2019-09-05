@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>付款账户导入模板</title>
+
+</head>
+<body>
+<div style="width:100%;height:20%;">
+<input type="button" value="导入" onclick="file_in()">&nbsp;&nbsp;&nbsp;&nbsp;
+<input type="button" value="导出" onclick="file_out2()">
+</div>
+<div id="canvas_data" style="width:100%;height:80%;"></div>
+<!--导入文件使用控件-->
+<input type="file" id="excel_in" style="display:none;" />
+<!-- 导出文件使用控件，标签不需要内容 -->
+<a href="javascript" id="excel_out" download="这里是下载的文件名.xlsx"  style="display:none;"></a>
+
+<script type="text/javascript" src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script src="http://oss.sheetjs.com/js-xlsx/xlsx.full.min.js"></script>
+<script type="text/javascript" src="xlsxhelper.js"></script>
+<script type="text/javascript" src="canvas-datagrid.js"></script>
+<script type="text/javascript">
+    //导入excel
+    function file_in() {
+        $('#excel_in').click();
+    }
+    var grid ;
+    var _agentTypeArr = {
+    	'伊斯丹道具': "",
+		'克锐灯具': "灯具",
+		'凯鑫地毯': "地毯",
+		'华豪照明': "灯具",
+		'卡力展示': "道具",
+		'奥驰': "广告",
+		'晟大光电': "光电",
+		'杭州亚鹏/乐派': "搭建",
+		'杰隆广告': "广告",
+		'柏年标饰': "LOGO",
+		'沃沃照明': "灯具",
+		'海迪展示': "道具",
+		'科翔墙纸': "墙纸",
+		'索高道具': "道具",
+		'纳谷照明(原极成)': "灯具",
+		'臻旺道具': "道具",
+		'舟海': "道具",
+		'荣熙照明': "照明",
+		'达美沙发': "沙发",
+		'阳河广告': "广告"
+    }
+
+    $('#excel_in').change(function (e) {
+        //xlsx.importf(this, getexceldata);
+        var formData = new FormData();
+		 var name=$('#excel_in').val();
+		 formData.append("file",$("#excel_in")[0].files[0]);
+	     formData.append("name",name); 
+	     formData.append("token",'1a650a847e43aa1d66d45142f3b041f8'); 
+		 $.ajax({
+	        url : 'http://127.0.0.1:8080/myExcelService/DataDeal/upLoadFile2',
+	        type : 'POST',
+	        async: false,
+	        cache:false,
+	        data : formData,
+	        // 告诉jQuery不要去处理发送的数据
+	        processData : false,
+	        // 告诉jQuery不要去设置Content-Type请求头
+	        contentType : false,
+	        //dataType : 'text',
+	        xhrFields:{withCredentials:true},//确保ajax请求每次都是同一个session
+	        beforeSend:function(){
+	            console.log("正在进行，请稍候");
+	        },
+	        success : function(data) {
+	        	var newExcelList = eval('('+data+')');
+	        	/* var excelList = eval('('+data+')');
+	        	//1.找出大类、供应商、付款主体
+	        	var bigTypeArr = [],agentArr=[],payCompanyArr=[];
+	        	for(var i=1;i<excelList.length;i++){
+	        		if(!ComtainVal(bigTypeArr,excelList[i][6]))
+	        			bigTypeArr.push(excelList[i][6]);
+	        		if(!ComtainVal(agentArr,excelList[i][7]))
+	        			agentArr.push(excelList[i][7]);
+	        		if(!ComtainVal(payCompanyArr,excelList[i][2]))
+	        			payCompanyArr.push(excelList[i][2]);
+	        	}
+	        	//2.排序顺序大类-供应商-付款主体
+	        	var newExcelList = [];
+	        	for(idx in bigTypeArr){
+	        		for(idx2 in agentArr){
+	        			for(idx3 in payCompanyArr){
+	        				for(idx4 in excelList){
+	        					var row = excelList[idx4];
+	        					if(row[6]==bigTypeArr[idx] && row[7]==agentArr[idx2] && row[2]==payCompanyArr[idx3]){
+	        						newExcelList.push(row);
+	        					}
+	        				}
+	        			}
+	        		}
+	        	} */
+	        	console.log(newExcelList);
+	        	
+	          	grid = canvasDatagrid({
+	                parentNode: document.getElementById("canvas_data"),
+	                borderDragBehavior: 'move',
+	                allowMovingSelection: true,
+	                columnHeaderClickBehavior: 'select',
+	                allowFreezingRows: true,
+	                allowFreezingColumns: true,
+	                allowRowReordering: true,
+	                tree: false,
+	                debug: false,
+	                showPerformance: false
+	            });
+	            grid.style.height = '90%';
+        		grid.style.width = '100%';
+				/* grid.data = [
+				    {'店铺名称': 'row 1 column 1', '签约公司': 'row 1 column 2', '付款单位': 'row 1 column 3','店铺类型':'','金额':'','扣款':'','大类':'','供应商':''},
+				    {'店铺名称': 'row 1 column 1', '签约公司': 'row 1 column 2', '付款单位': 'row 1 column 3','店铺类型':'','金额':'','扣款':'','大类':'','供应商':''}
+				]; */
+				var gridData = new Array();
+				//显示表格数据
+				for(pp in newExcelList){
+					gridData.push({'店铺名称': newExcelList[pp][0], '签约公司': newExcelList[pp][1], '付款单位': newExcelList[pp][2],
+							'店铺类型':newExcelList[pp][3],'金额':newExcelList[pp][4],'扣款':'','大类':newExcelList[pp][6],'供应商':newExcelList[pp][7]});
+				}
+	            grid.data=gridData;
+	            
+	        }
+	    });
+    })
+    
+    function ComtainVal(unitArr,unit,key){
+    	for(var i=0;i<unitArr.length;i++){
+    		if(key && unit==unitArr[i][key]) return true;
+    		else if(unit==unitArr[i]) return true;
+    	}
+    	return false;
+    }
+
+    function getexceldata(info) {
+        console.log(info);
+    }
+
+
+    var jsono = [{ //测试数据
+        "保质期临期预警(天)": "adventLifecycle",
+        "商品标题": "title",
+        "建议零售价": "defaultPrice"
+    }, { //测试数据
+        "保质期临期预警(天)": "adventLifecycle2",
+        "商品标题": "title2",
+        "建议零售价": "defaultPrice2"
+    }];
+    //导出excel
+    function file_out() {
+        $('#excel_out').attr('download', 'download.xlsx');
+        console.log(grid.data);
+        xlsx.downloadExl(grid.data, $('#excel_out')[0]);
+    };
+	
+	function file_out2(){
+		location.href="http://127.0.0.1:8080/myExcelService/DataDeal/exportMyData?token=1a650a847e43aa1d66d45142f3b041f8";
+	}
+</script>
+</body>
+</html>
